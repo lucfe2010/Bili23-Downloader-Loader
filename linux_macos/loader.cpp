@@ -130,6 +130,23 @@ int main(int argc, char* argv[]) {
     setenv("PYTHONUTF8", "1", 1);
     setenv("PYTHONCOERCECLOCALE", "1", 1);
 
+#ifndef __APPLE__
+    // GNOME / KDE 的 Wayland 会话下，只要设置了 WAYLAND_DISPLAY，Qt 就优先选用 wayland
+    // 平台插件。此时窗口装饰归客户端负责，而 qframelesswindow 在 Linux 上的
+    // LinuxWindowEffect.addShadowEffect() 是空实现，无边框窗口不会有任何阴影。
+    // 走 xcb（Wayland 会话下经由 Xwayland）则由 mutter / kwin 绘制服务端阴影，
+    // 表现与 X11 会话一致。
+    //
+    // 第三个参数为 0，不覆盖用户显式设置的 QT_QPA_PLATFORM，需要原生 Wayland 时仍可自行指定。
+    // macOS 使用 cocoa 插件，写死 xcb 会导致程序无法启动，因此排除在外。
+    setenv("QT_QPA_PLATFORM", "xcb", 0);
+
+    // WM_CLASS 的实例名部分，Qt 优先取 RESOURCE_NAME，其次是 argv[0] 的文件名。
+    // 打包后 argv[0] 是 _pystand_static.int，桌面环境据此无法把窗口关联到
+    // bili23-downloader.desktop，任务栏中的图标与名称都会回退成默认值。
+    setenv("RESOURCE_NAME", "bili23-downloader", 0);
+#endif
+
     if (access(python_home.c_str(), X_OK) != 0) {
         std::cerr << "runtime not found or not accessible!" << std::endl;
         return 2;
