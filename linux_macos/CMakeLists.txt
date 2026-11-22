@@ -18,6 +18,7 @@ if(OPENSSL_ROOT_DIR)
 endif()
 
 find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
+find_package(ZLIB REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 
